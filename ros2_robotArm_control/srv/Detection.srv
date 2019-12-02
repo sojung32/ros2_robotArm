@@ -1,0 +1,5 @@
+int64 color
+int64 xCenter
+int64 yCenter
+---
+int64 result
