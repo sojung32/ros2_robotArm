@@ -19,7 +19,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(color_srv REQUIRED)
+find_package(object_srv REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 
 set(srv_files
@@ -32,7 +32,7 @@ add_executable(client src/unityBluetooth.cpp)
 ament_target_dependencies(client
 rcl
 rclcpp
-"color_srv")
+"object_srv")
 
 install(PROGRAMS
   scripts/robotArm.py

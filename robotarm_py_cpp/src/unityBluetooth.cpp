@@ -8,11 +8,17 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <bluetooth/rfcomm.h>
-#include "color_srv/srv/detection.hpp"
+#include "object_srv/srv/detection.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <typeinfo>
-using Detection = color_srv::srv::Detection;
+#include <string>
+#include <vector>
+#include <iostream>
+#include <sstream>
 
+
+using Detection = object_srv::srv::Detection;
+using namespace std;
 int main(int argc, char ** argv)
 {
 	rclcpp::init(argc, argv);
@@ -41,14 +47,33 @@ int main(int argc, char ** argv)
 	memset(msg, 0, sizeof(msg));
 	
 	recv(clnt, msg, sizeof(msg), 0);
-	RCLCPP_INFO(node->get_logger(), "bluetooth connection %c",msg);
+	RCLCPP_INFO(node->get_logger(), "Bluetooth connection");
+	RCLCPP_INFO(node->get_logger(), "Send to service...");
 	
-	request->color = "red";
-	request->wrist = 10;
-	request->wristv = 20;
-	request->elbow = 30;
-	request->shoulder = 40;
-	request->pshoulder = 50;
+	string sendedMsg;
+	for(int i=0;i<50;i++) sendedMsg+=msg[i];
+	
+	char splitSymbol='/';
+	stringstream f(sendedMsg);
+	vector<string> split;
+	string angleMsg;
+	
+	while(getline(f,angleMsg,splitSymbol)){
+		split.push_back(angleMsg);
+	}
+	float angles[5] = {0};
+	int i=0;
+	string str;
+	for(vector<string>::iterator it=split.begin();it!=split.end();++it){
+		str = *it;
+		angles[i++] = atof(str.c_str());
+	}
+	
+	request->objname = angles[0];
+	request->wristv = angles[4];
+	request->elbow = angles[3];
+	request->shoulder = angles[2];
+	request->pshoulder = angles[1];
 	
 	while (!client->wait_for_service(std::chrono::seconds(1)))
 	{
@@ -65,7 +90,7 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 	auto result = result_future.get();
-	RCLCPP_INFO(node->get_logger(), "result %d", result->result);
+	RCLCPP_INFO(node->get_logger(), "Sent successfully");
 	rclcpp::shutdown();
 	return 0;
 }

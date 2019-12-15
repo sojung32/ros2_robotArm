@@ -2,7 +2,7 @@
 
 import rclpy
 from rclpy.node import Node
-from color_srv.srv import Detection
+from object_srv.srv import Detection
 import time
 import RPi.GPIO as GPIO
 
@@ -20,14 +20,16 @@ class ServoControl(Node):
 	def __init__(self):
 		super().__init__('picking_service')
 		self.initServo()
+		self.servoCamera()
 		self.srv = self.create_service(Detection, 'picking', self.motor)
 		self.get_logger().info("create service")
 	def motor(self, request, response):
-		response.result = color[request.color]
-		self.get_logger().info('Detect: %s, %d, %d, %d, %d, %d' % (color[request.color], request.wrist, request.wristv, request.elbow, request.shoulder, request.pshoulder))
+		response.result = request.objname
+		self.get_logger().info('Detected object : car')
+		self.get_logger().info("Robot Arm working...")
 		self.servoCamera()
 		self.servoPicking(request)
-		self.servoSort(request.color)
+		self.servoSort(request.objname)
 		self.servoCamera()
 		self.servoFinish()
 		
@@ -57,10 +59,9 @@ class ServoControl(Node):
 	
 
 	def servoPicking(self, req):
-		print("servoPicking")
-		self.fin.ChangeDutyCycle(3) #3 open / 7.5 close / 4.5grab
+		self.fin.ChangeDutyCycle(4.8) #3 open / 7.5 close / 4.5grab
 		#time.sleep(1)
-		self.wri.ChangeDutyCycle(req.wrist) #1-12(clock) 1 normal
+		self.wri.ChangeDutyCycle(1) #1-12(clock) 1 normal
 		#time.sleep(1)
 		self.wriV.ChangeDutyCycle(req.wristv) #1-7 4 normal
 		time.sleep(1)
@@ -73,17 +74,16 @@ class ServoControl(Node):
 		
 
 	def servoSort(self, detect):
-		print("servoSort")
-		if detect==colors[1]:
+		if detect==1:
 			self.pShd.ChangeDutyCycle(12) #2 back / 12 front
 			time.sleep(3)
-		elif detect == color[2]:
+		elif detect == 2:
 			self.pShd.ChangeDutyCycle(7.5) #2 back / 12 front
 			time.sleep(3)
-		elif detect == color[3]:
+		elif detect == 3:
 			self.pShd.ChangeDutyCycle(4.5) #2 back / 12 front
 			time.sleep(3)
-		elif detect == color[4]:
+		elif detect == 4:
 			self.pShd.ChangeDutyCycle(2) #2 back / 12 front
 			time.sleep(3)
 
@@ -91,12 +91,11 @@ class ServoControl(Node):
 		self.elb.ChangeDutyCycle(10) #1-6 / 1 180degree / 6 40degree
 		self.shd.ChangeDutyCycle(6.5) #2 10degree / 12 180(front)
 		self.pShd.ChangeDutyCycle(7) #2 back / 12 front	
-		self.fin.ChangeDutyCycle(3) #3 open / 7.5 close / 4.5grab
+		self.fin.ChangeDutyCycle(4.8) #3 open / 7.5 close / 4.5grab
 		time.sleep(1)
 		
 	
 	def servoCamera(self):
-		print("servoCamera")
 		self.wriV.ChangeDutyCycle(2.5) #1-7 4 normal
 		self.elb.ChangeDutyCycle(10) #1-6 / 1 180degree / 6 40degree
 		self.shd.ChangeDutyCycle(6.5) #2 10degree / 12 180(front)
@@ -106,7 +105,6 @@ class ServoControl(Node):
 	
 
 	def servoFinish(self):
-		print("servo finish")
 		
 		self.fin.stop()
 		self.wri.stop()
@@ -115,6 +113,7 @@ class ServoControl(Node):
 		self.shd.stop()
 		self.pShd.stop()
 		GPIO.cleanup()
+		self.get_logger().info("Done")
 
 def main(args=None):
 	rclpy.init(args=args)
