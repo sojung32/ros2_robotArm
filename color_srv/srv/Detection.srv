@@ -1,8 +1,0 @@
-string color
-int64 pshoulder
-int64 shoulder
-int64 elbow
-int64 wristv
-int64 wrist
----
-int64 result
